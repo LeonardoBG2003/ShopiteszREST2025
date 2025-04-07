@@ -1,17 +1,22 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from typing import Any
+from dao.productosDAO import ProductoDAO
+from models.productosModel import ProductosSalida
 
 router = APIRouter(
     prefix="/productos",
     tags=["Productos"]
 )
 
-@router.get("/")
-async def consultaProductos():
-    return {"mensaje": "Consultando los productos"}
+@router.get("/", response_model = ProductosSalida)
+async def consultaGeneral(request: Request)->Any:
+    #return {"mensaje": "Consultando los productos"}
+    productoDAO = ProductoDAO(request.app.db)
+    return productoDAO.consultaGeneral()
 
 @router.get("/{idProducto}")
-async def consultarProducto(idProducto:int):
-    return {"mensaje": "Consultando el producto: "+ str(idProducto)}
+async def consultaIndividual(idProducto:int):
+    return {"mensaje": "Consultando el producto con id: "+ str(idProducto)}
 
 @router.get("/vendedor/{idVendedor}")
 async def consultarPorVendedor(idVendedor:str):
