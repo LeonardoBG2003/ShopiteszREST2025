@@ -1,6 +1,8 @@
 from datetime import datetime, date
+from urllib import request
 
-from fastapi import APIRouter
+from dao.pedidosDAO import PedidoDAO
+from fastapi import APIRouter, Request
 from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect
 
 router = APIRouter(
@@ -9,10 +11,9 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=Salida)
-async def crearPedido(pedido: PedidoInsert)->Salida:
-    salida = Salida(estatus="OK", mensaje="Pedido creado con exito")
-    #return {"mensaje": "Creando un pedido", "pedido": pedido}
-    return salida
+async def crearPedido(pedido: PedidoInsert, request: Request)->Salida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.agregar(pedido)
 
 @router.put("/")
 async def modificarPedido():
@@ -23,16 +24,9 @@ async def eliminarPedido():
     return {"mensaje": "Eliminando un pedido"}
 
 @router.get("/", response_model=PedidosSalida)
-async def consultaPedidos()->PedidosSalida:
-    comprador = Comprador(idComprador=1, nombre="Juan")
-    vendedor = Vendedor(idVendedor=1, nombre="WALMART")
-    pedido = PedidoSelect(idPedido="500", fechaRegistro=datetime.today(),
-                         fechaConfirmacion=datetime.today(), fechaCierre=datetime.today(),
-                         costosEnvio=100, subtotal=200, totalPagar=3000, estatus="Pagado",
-                         comprador=comprador, vendedor=vendedor)
-    lista=[pedido]
-    salida = PedidosSalida(estatus="OK", mensaje="Consulta de Pedidos", pedidos=lista)
-    return salida
+async def consultaPedidos(request : Request)->PedidosSalida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.consultaGeneral()
 
 @router.get("/{idPedido}")
 async def consultarPedido(idPedido:str):
