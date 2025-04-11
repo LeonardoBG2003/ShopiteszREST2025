@@ -34,9 +34,10 @@ async def consultarPedido(idPedido:str):
 
 @router.put("/{idPedido}/agregarProducto")
 async def agregarProductoPedido(idPedido:str, item:Item):
-    salida = {"mensaje":"Agregando un producto al pedido: "  + idPedido , "item: ":item.dict()}
+    salida = {"mensaje":"Agregando un producto al pedido: " + idPedido, "item: ":item.dict()}
     return salida
 
-@router.put("/{idPedido}/pagar")
-async def pagarPedido(idPedido:str, pedidoPay:PedidoPay):
-    salida = {"mesaje": "Pagando el pedido: " + idPedido , PedidoPay: PedidoPay.dict()}
+@router.put("/{idPedido}/pagar", summary= "Pagar pedido", response_model=Salida)
+async def pagarPedido(idPedido:str, pedidoPay:PedidoPay, request: Request):
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.pagarPedido(idPedido, pedidoPay)
