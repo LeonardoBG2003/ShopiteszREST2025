@@ -3,7 +3,8 @@ from urllib import request
 
 from dao.pedidosDAO import PedidoDAO
 from fastapi import APIRouter, Request
-from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect
+from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
+    PediddoCancelacion
 
 router = APIRouter(
     prefix="/pedidos",
@@ -19,9 +20,10 @@ async def crearPedido(pedido: PedidoInsert, request: Request)->Salida:
 async def modificarPedido():
     return {"mensaje": "Modificando un pedido"}
 
-@router.delete("/")
-async def eliminarPedido():
-    return {"mensaje": "Eliminando un pedido"}
+@router.delete("/{idPedido}/cancelar", summary="Cancelacion de un pedido", response_model=Salida)
+async def eliminarPedido(idPedido: str, pedidoCancelacion:PediddoCancelacion, request: Request)->Salida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.cancelarPedido(idPedido, pedidoCancelacion)
 
 @router.get("/", response_model=PedidosSalida)
 async def consultaPedidos(request : Request)->PedidosSalida:

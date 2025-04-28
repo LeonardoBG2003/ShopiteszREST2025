@@ -57,3 +57,6 @@ class PedidoSelect(BaseModel):
 
 class PedidosSalida(Salida):
     pedidos: list[PedidoSelect]
+
+class PediddoCancelacion(BaseModel):
+    motivoCancelacion: str
