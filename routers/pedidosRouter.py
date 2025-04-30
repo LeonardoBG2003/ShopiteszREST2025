@@ -3,8 +3,7 @@ from urllib import request
 
 from dao.pedidosDAO import PedidoDAO
 from fastapi import APIRouter, Request
-from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
-    PediddoCancelacion
+from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, PedidoCancelacion, PedidoConfirmacion
 
 router = APIRouter(
     prefix="/pedidos",
@@ -21,7 +20,7 @@ async def modificarPedido():
     return {"mensaje": "Modificando un pedido"}
 
 @router.delete("/{idPedido}/cancelar", summary="Cancelacion de un pedido", response_model=Salida)
-async def eliminarPedido(idPedido: str, pedidoCancelacion:PediddoCancelacion, request: Request)->Salida:
+async def eliminarPedido(idPedido: str, pedidoCancelacion:PedidoCancelacion, request: Request)->Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.cancelarPedido(idPedido, pedidoCancelacion)
 
@@ -43,3 +42,8 @@ async def agregarProductoPedido(idPedido:str, item:Item):
 async def pagarPedido(idPedido:str, pedidoPay:PedidoPay, request: Request):
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.pagarPedido(idPedido, pedidoPay)
+
+@router.put("/{idPedido}/confirmar", response_model=Salida, summary="Confirmar un pedido pagado")
+async def confirmarPedido(idPedido: str, pedidoConfirmacion:PedidoConfirmacion, request: Request) -> Salida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.confirmarPedido(idPedido, pedidoConfirmacion)

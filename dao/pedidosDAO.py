@@ -1,4 +1,4 @@
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PediddoCancelacion
+from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -89,7 +89,7 @@ class PedidoDAO:
             print(ex)
         return estatus
 
-    def cancelarPedido(self, idPedido: str, pedidoCancelacion: PediddoCancelacion):
+    def cancelarPedido(self, idPedido: str, pedidoCancelacion: PedidoCancelacion):
         salida = Salida(estatus="", mensaje="")
         try:
             objeto = self.consultarEstatusPedido(idPedido)
@@ -110,4 +110,50 @@ class PedidoDAO:
             print(ex)
             salida.estatus = "ERROR"
             salida.mensaje = "El pedido no se puede cancelar, consulta al adminstrador."
+        return salida
+
+    def confirmarPedido(self, idPedido: str, pedidoConfirmacion: PedidoConfirmacion) -> Salida:
+        salida = Salida(estatus="", mensaje="")
+        try:
+            pedido = self.db.pedidos.find_one({"_id": ObjectId(idPedido)})
+            if not pedido:
+                salida.estatus = "ERROR"
+                salida.mensaje = f"Pedido con id {idPedido} no encontrado."
+                return salida
+            if pedido["estatus"] != "Pagado":
+                salida.estatus = "ERROR"
+                salida.mensaje = f"El pedido debe estar en estatus Pagado. Estatus actual: {pedido.get('estatus')}"
+                return salida
+            if 'detalle' not in pedido:
+                salida.estatus = "ERROR"
+                salida.mensaje = "No se encontró el detalle del pedido."
+                return salida
+            detalle_pedido = {item['idProducto']: item['cantidad'] for item in pedido['detalle']}
+            for envioItem in pedidoConfirmacion.envio.detalle:
+                if envioItem.idProducto not in detalle_pedido:
+                    salida.estatus = "ERROR"
+                    salida.mensaje = f"Producto con id {envioItem.idProducto} no encontrado en el pedido original."
+                    return salida
+                if envioItem.cantidad != detalle_pedido.get(envioItem.idProducto):
+                    salida.estatus = "ERROR"
+                    salida.mensaje = f"La cantidad enviada ({envioItem.cantidad}) para el producto {envioItem.idProducto} no coincide con la cantidad pedida ({detalle_pedido.get(envioItem.idProducto)})."
+                    return salida
+            update_data = {
+                "$set": {
+                    "fechaConfirmacion": datetime.now(),
+                    "estatus": "Confirmado",
+                    "envio": jsonable_encoder(pedidoConfirmacion.envio)
+                }
+            }
+            result = self.db.pedidos.update_one({"_id": ObjectId(idPedido)}, update_data)
+            if result.modified_count > 0:
+                salida.estatus = "OK"
+                salida.mensaje = f"Pedido con id: {idPedido} confirmado con éxito."
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = f"No se pudo confirmar el pedido con id: {idPedido}. (Puede que ya estuviera confirmado o no se encontró)."
+        except Exception as ex:
+            print(f"Error al confirmar el pedido {idPedido}: {ex}")
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al confirmar el pedido, consulta al administrador."
         return salida

@@ -58,5 +58,21 @@ class PedidoSelect(BaseModel):
 class PedidosSalida(Salida):
     pedidos: list[PedidoSelect]
 
-class PediddoCancelacion(BaseModel):
+class PedidoCancelacion(BaseModel):
     motivoCancelacion: str
+
+class detalle(BaseModel):
+    idProducto: int
+    cantidad: int
+
+class Envio(BaseModel):
+    fechaSalida: datetime
+    fechaEntPlan: datetime
+    noGuia: str
+    idPaqueteria: int
+    detalle: list[detalle]
+
+class PedidoConfirmacion(BaseModel):
+    fechaConfirmacion: datetime | None = None
+    estatus: str | None = "Confirmado"
+    envio: Envio
