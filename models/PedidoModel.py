@@ -76,3 +76,59 @@ class PedidoConfirmacion(BaseModel):
     fechaConfirmacion: datetime | None = None
     estatus: str | None = "Confirmado"
     envio: Envio
+
+class Items(BaseModel):
+    idProducto: int
+    nombreProducto: str #Se agrega a diferencia de "Item"
+    cantidad: int
+    precio: float
+    subtotal: float
+    costoEnvio: float
+    subtotalEnvio: float
+
+class Pago2(BaseModel):
+    idTarjeta: int | None = None     #Se agrega a diferencia de "Pago"
+    noTarjeta: str
+    fecha: datetime
+    monto: float
+    estatus: str
+
+class Paqueteria(BaseModel):
+    idPaqueteria: int
+    nombre: str | None = None
+
+class Envio2(BaseModel):    #En este metodo nuevo no hay detalle y en la paqueteria se agrego porque no viene el nombre
+    fechaSalida: datetime
+    fechaEntPlan: datetime
+    fechaRecepcion: datetime | None = None #Tampoco tiene este campo
+    noGuia: str
+    paqueteria: Paqueteria | None = None
+
+class Productos(BaseModel):
+    idProducto: int
+    nombreProducto: str
+    cantidadEnviada: int
+    cantidadRecibida: int | None = None
+    comentario: str | None = None
+
+class PedidoSelectID(BaseModel):
+    idPedido: str
+    fechaRegistro: datetime
+    fechaConfirmacion: datetime | None = None
+    fechaCierre: datetime | None = None
+    costosEnvio: float
+    subtotal: float
+    totalPagar: float
+    estatus: str
+    motivoCancelacion: str | None = None
+    valoracion: int | None = None
+    items: list[Items]
+    pago: Pago2
+    comprador: Comprador
+    vendedor: Vendedor
+    envio: Envio2
+    productos: list[Productos]
+    paqueteria: Paqueteria
+
+class PedidosSalidaID(Salida):
+    pedido: PedidoSelectID | None = None

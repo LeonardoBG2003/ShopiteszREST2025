@@ -1,4 +1,4 @@
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion
+from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion, PedidoSelectID, PedidosSalidaID
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -156,4 +156,21 @@ class PedidoDAO:
             print(f"Error al confirmar el pedido {idPedido}: {ex}")
             salida.estatus = "ERROR"
             salida.mensaje = "Error al confirmar el pedido, consulta al administrador."
+        return salida
+
+    def consultarPedidoPorID(self, idPedido: str) -> PedidosSalidaID:
+        salida = PedidosSalidaID(estatus="", mensaje="", pedido=None)
+        try:
+            pedido_data = self.db.consultaIDView.find_one({"idPedido": idPedido})
+            if pedido_data:
+                salida.pedido = pedido_data
+                salida.estatus = "OK"
+                salida.mensaje = f"Pedido {idPedido} encontrado con extito."
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = f"El pedido con id {idPedido} no se ha encontrado."
+        except Exception as e:
+                print(f"Error al consultar el pedido {idPedido}: {e}")
+                salida.estatus = "ERROR"
+                salida.mensaje = "Error interno al consultar el pedido."
         return salida

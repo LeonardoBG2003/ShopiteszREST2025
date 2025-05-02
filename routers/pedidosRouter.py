@@ -3,7 +3,7 @@ from urllib import request
 
 from dao.pedidosDAO import PedidoDAO
 from fastapi import APIRouter, Request
-from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, PedidoCancelacion, PedidoConfirmacion
+from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID
 
 router = APIRouter(
     prefix="/pedidos",
@@ -29,9 +29,9 @@ async def consultaPedidos(request : Request)->PedidosSalida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.consultaGeneral()
 
-@router.get("/{idPedido}")
-async def consultarPedido(idPedido:str):
-    return {"mensaje": "Consultando el pedido: "+idPedido}
+#@router.get("/{idPedido}")
+#async def consultarPedido(idPedido:str):
+#    return {"mensaje": "Consultando el pedido: "+idPedido}
 
 @router.put("/{idPedido}/agregarProducto")
 async def agregarProductoPedido(idPedido:str, item:Item):
@@ -47,3 +47,8 @@ async def pagarPedido(idPedido:str, pedidoPay:PedidoPay, request: Request):
 async def confirmarPedido(idPedido: str, pedidoConfirmacion:PedidoConfirmacion, request: Request) -> Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.confirmarPedido(idPedido, pedidoConfirmacion)
+
+@router.get("/{idPedido}", response_model=PedidosSalidaID, summary="Consultar un pedido por su ID")
+async def consultarPedidoID(idPedido: str, request: Request) -> PedidosSalidaID:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.consultarPedidoPorID(idPedido)
