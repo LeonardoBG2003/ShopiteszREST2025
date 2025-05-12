@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from models.PedidoModel import Vendedor, Salida
+from models.pedidosModel import Vendedor, Salida
 
 class Categoria(BaseModel):
     idCategoria: int

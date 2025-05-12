@@ -1,4 +1,4 @@
-from models.PedidoModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion, PedidoSelectID, PedidosSalidaID
+from models.pedidosModel import PedidoInsert, Salida, PedidosSalida, PedidoPay, PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, EventoSalida, RegistrarEvento, PedidoEnvioSalida
 from datetime import datetime
 from dao.usuariosDAO import UsuarioDAO
 from fastapi.encoders import jsonable_encoder
@@ -173,4 +173,58 @@ class PedidoDAO:
                 print(f"Error al consultar el pedido {idPedido}: {e}")
                 salida.estatus = "ERROR"
                 salida.mensaje = "Error interno al consultar el pedido."
+        return salida
+
+    def registrarTracking(self, idPedido: str, evento: RegistrarEvento) -> Salida:
+        salida = Salida(estatus="", mensaje="")
+        try:
+            pedido = self.db.pedidos.find_one({"_id": ObjectId(idPedido)})
+            if not pedido or pedido.get("estatus") != "Confirmado":
+                salida.estatus = "ERROR"
+                salida.mensaje = "El pedido no existe o no se encuentra en estado Confirmado"
+                return salida
+            if "envio" not in pedido:
+                salida.estatus = "ERROR"
+                salida.mensaje = "El pedido no contiene información de envío"
+                return salida
+            tracking_event = {
+                "evento": evento.evento,
+                "lugar": evento.lugar,
+                "fecha": evento.fecha
+            }
+            update_result = self.db.pedidos.update_one(
+                {"_id": ObjectId(idPedido)},
+                {
+                    "$push": {
+                        "envio.tracking": tracking_event
+                    }
+                }
+            )
+            if update_result.modified_count > 0:
+                salida.estatus = "OK"
+                salida.mensaje = f"Evento de tracking registrado exitosamente en el pedido con id: {idPedido}"
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = "No se pudo registrar el evento de tracking"
+        except Exception as ex:
+            print(f"Error al registrar tracking: {ex}")
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al registrar el evento de tracking, consulte al administrador"
+        return salida
+
+    def trackingPedido(self, idPedido: str):
+        salida = PedidoEnvioSalida(estatus="", mensaje="", pedido=None)
+        try:
+            pedidoTracking = self.db.consultarHistorialView.find_one({"idPedido": idPedido})
+            if pedidoTracking:
+                salida.estatus = "OK"
+                salida.mensaje = "Consulta de tracking exitosa"
+                salida.pedido = pedidoTracking
+            else:
+                salida.estatus = "ERROR"
+                salida.mensaje = "No se encontró información de tracking para el pedido."
+        except Exception as e:
+            print(e)
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error interno al consultar el tracking del pedido"
         return salida

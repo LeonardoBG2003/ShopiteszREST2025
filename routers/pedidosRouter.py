@@ -3,14 +3,15 @@ from urllib import request
 
 from dao.pedidosDAO import PedidoDAO
 from fastapi import APIRouter, Request
-from models.PedidoModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID
+from models.pedidosModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
+    PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, RegistrarEvento, EventoSalida, PedidoEnvioSalida
 
 router = APIRouter(
     prefix="/pedidos",
     tags=["Pedidos"]
 )
 
-@router.post("/", response_model=Salida)
+@router.post("/", response_model=Salida, summary="Crear un pedido")
 async def crearPedido(pedido: PedidoInsert, request: Request)->Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.agregar(pedido)
@@ -19,7 +20,7 @@ async def crearPedido(pedido: PedidoInsert, request: Request)->Salida:
 async def modificarPedido():
     return {"mensaje": "Modificando un pedido"}
 
-@router.delete("/{idPedido}/cancelar", summary="Cancelacion de un pedido", response_model=Salida)
+@router.delete("/{idPedido}/cancelar", response_model=Salida, summary="Cancelar un pedido")
 async def eliminarPedido(idPedido: str, pedidoCancelacion:PedidoCancelacion, request: Request)->Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.cancelarPedido(idPedido, pedidoCancelacion)
@@ -38,8 +39,8 @@ async def agregarProductoPedido(idPedido:str, item:Item):
     salida = {"mensaje":"Agregando un producto al pedido: " + idPedido, "item: ":item.dict()}
     return salida
 
-@router.put("/{idPedido}/pagar", summary= "Pagar pedido", response_model=Salida)
-async def pagarPedido(idPedido:str, pedidoPay:PedidoPay, request: Request):
+@router.put("/{idPedido}/pagar", response_model=Salida, summary= "Pagar pedido")
+async def pagarPedido(idPedido: str, pedidoPay: PedidoPay, request: Request):
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.pagarPedido(idPedido, pedidoPay)
 
@@ -52,3 +53,14 @@ async def confirmarPedido(idPedido: str, pedidoConfirmacion:PedidoConfirmacion, 
 async def consultarPedidoID(idPedido: str, request: Request) -> PedidosSalidaID:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.consultarPedidoPorID(idPedido)
+
+@router.post("/{idPedido}/tracking", response_model=Salida, summary="Registrar el evento a un pedido")
+async def registrarTracking(idPedido: str, evento: RegistrarEvento, request: Request) -> Salida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    salida = pedidoDAO.registrarTracking(idPedido, evento)
+    return Salida(estatus=salida.estatus, mensaje=salida.mensaje)
+
+@router.get("/{idPedido}/tracking", response_model=PedidoEnvioSalida, summary="Consultar el tracking de un pedido")
+async def trackingPedido(idPedido: str, request: Request) -> PedidoEnvioSalida:
+    pedidoDAO = PedidoDAO(request.app.db)
+    return pedidoDAO.trackingPedido(idPedido)

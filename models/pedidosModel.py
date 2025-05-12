@@ -61,7 +61,7 @@ class PedidosSalida(Salida):
 class PedidoCancelacion(BaseModel):
     motivoCancelacion: str
 
-class detalle(BaseModel):
+class Detalle(BaseModel):
     idProducto: int
     cantidad: int
 
@@ -70,7 +70,7 @@ class Envio(BaseModel):
     fechaEntPlan: datetime
     noGuia: str
     idPaqueteria: int
-    detalle: list[detalle]
+    detalle: list[Detalle]
 
 class PedidoConfirmacion(BaseModel):
     fechaConfirmacion: datetime | None = None
@@ -132,3 +132,30 @@ class PedidoSelectID(BaseModel):
 
 class PedidosSalidaID(Salida):
     pedido: PedidoSelectID | None = None
+
+#1era parte del examen
+class RegistrarEvento(BaseModel):
+    evento: str
+    lugar: str
+    fecha: datetime
+
+class EventoSalida(Salida):
+    evento: RegistrarEvento | None = None
+
+#2da parte del examen
+class Tracking(BaseModel):
+    evento: str
+    lugar: str
+    fecha: datetime
+
+class DetalleEnvio(BaseModel):
+    paqueteria: str
+    noGuia: str
+    tracking: list[Tracking] | None = None
+
+class PedidoEnvio(BaseModel):
+    idPedido: str
+    envio: DetalleEnvio
+
+class PedidoEnvioSalida(Salida):
+    pedido: PedidoEnvio | None = None
