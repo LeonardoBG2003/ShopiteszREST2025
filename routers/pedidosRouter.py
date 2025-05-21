@@ -1,11 +1,9 @@
-from datetime import datetime, date
-from urllib import request
-
 from dao.pedidosDAO import PedidoDAO
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from models.pedidosModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
     PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, RegistrarEvento, EventoSalida, PedidoEnvioSalida
-
+from routers.usuariosRouter import validarUsuario
+from models.usuariosModel import UsuarioSalida
 router = APIRouter(
     prefix="/pedidos",
     tags=["Pedidos"]
@@ -26,9 +24,18 @@ async def eliminarPedido(idPedido: str, pedidoCancelacion:PedidoCancelacion, req
     return pedidoDAO.cancelarPedido(idPedido, pedidoCancelacion)
 
 @router.get("/", response_model=PedidosSalida)
-async def consultaPedidos(request : Request)->PedidosSalida:
-    pedidoDAO = PedidoDAO(request.app.db)
-    return pedidoDAO.consultaGeneral()
+async def consultaPedidos(request : Request, respuesta: UsuarioSalida = Depends(validarUsuario))->PedidosSalida:
+    salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+    usuario = respuesta.usuario
+    if respuesta.estatus == "OK" and usuario['tipo'] == "Administrador":
+        salida.estatus = "OK"
+        salida.mensaje = "Listado de pedidos"
+        pedidoDAO = PedidoDAO(request.app.db)
+        return pedidoDAO.consultaGeneral()
+    else:
+        salida.estatus = "ERROR"
+        salida.mensaje = "Sin autorizacion"
+        return salida
 
 #@router.get("/{idPedido}")
 #async def consultarPedido(idPedido:str):
