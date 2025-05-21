@@ -228,3 +228,29 @@ class PedidoDAO:
             salida.estatus = "ERROR"
             salida.mensaje = "Error interno al consultar el tracking del pedido"
         return salida
+
+    def consultaPorComprador(self, idComprador: int):
+        salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+        try:
+            pedidos = list(self.db.pedidosView.find({"comprador.idComprador": idComprador}))
+            salida.estatus = "OK"
+            salida.mensaje = f"Listado de pedidos del comprador : {idComprador}"
+            salida.pedidos = pedidos
+        except Exception as ex:
+            print(ex)
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al consulta los pedidos por comprador, consulta al adminstrador."
+        return salida
+
+    def consultaPorVendedor(self, idVendedor: int):
+        salida = PedidosSalida(estatus="", mensaje="", pedidos=[])
+        try:
+            pedidos = list(self.db.pedidosView.find({"vendedor.idVendedor": idVendedor}))
+            salida.estatus = "OK"
+            salida.mensaje = f"Listado de pedidos del vendedor : {idVendedor}"
+            salida.pedidos = pedidos
+        except Exception as ex:
+            print(ex)
+            salida.estatus = "ERROR"
+            salida.mensaje = "Error al consulta los pedidos por vendedor, consulta al adminstrador."
+        return salida

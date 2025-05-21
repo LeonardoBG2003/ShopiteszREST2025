@@ -1,7 +1,7 @@
 from dao.pedidosDAO import PedidoDAO
-from fastapi import APIRouter, Request, Depends
-from models.pedidosModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, Comprador, Vendedor, PedidoSelect, \
-    PedidoCancelacion, PedidoConfirmacion, PedidosSalidaID, RegistrarEvento, EventoSalida, PedidoEnvioSalida
+from fastapi import APIRouter, Request, Depends, HTTPException
+from models.pedidosModel import Item, PedidoInsert, PedidoPay, Salida, PedidosSalida, PedidoCancelacion, PedidoConfirmacion, \
+    PedidosSalidaID, RegistrarEvento, PedidoEnvioSalida
 from routers.usuariosRouter import validarUsuario
 from models.usuariosModel import UsuarioSalida
 router = APIRouter(
@@ -61,7 +61,25 @@ async def consultarPedidoID(idPedido: str, request: Request) -> PedidosSalidaID:
     pedidoDAO = PedidoDAO(request.app.db)
     return pedidoDAO.consultarPedidoPorID(idPedido)
 
-@router.post("/{idPedido}/tracking", response_model=Salida, summary="Registrar el evento a un pedido")
+@router.get("/comprador/{idComprador}", response_model=PedidosSalida, summary="Consulta de pedidos por comprador")
+async def consultarPorComprador(idComprador: int, request: Request, respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
+    usuario = respuesta.usuario
+    if respuesta.estatus == "OK" and usuario['tipo'] == 'Comprador' and usuario['_id'] == idComprador:
+        pedidosDAO = PedidoDAO(request.app.db)
+        return pedidosDAO.consultaPorComprador(idComprador)
+    else:
+        raise HTTPException(status_code= 404, detail= "Sin autorizacion")
+
+@router.get("/vendedor/{idVendedor}", response_model=PedidosSalida, summary="Consulta de pedidos por vendedor")
+async def consultarPorVendedor(idVendedor: int, request: Request, respuesta: UsuarioSalida = Depends(validarUsuario)) -> PedidosSalida:
+    usuario = respuesta.usuario
+    if respuesta.estatus == "OK" and usuario['tipo'] == 'Vendedor' and usuario['_id'] == idVendedor:
+        pedidosDAO = PedidoDAO(request.app.db)
+        return pedidosDAO.consultaPorVendedor(idVendedor)
+    else:
+        raise HTTPException(status_code= 404, detail= "Sin autorizacion")
+
+@router.post("/{idPedido}/tracking", response_model=PedidosSalida, summary="Registrar el evento a un pedido")
 async def registrarTracking(idPedido: str, evento: RegistrarEvento, request: Request) -> Salida:
     pedidoDAO = PedidoDAO(request.app.db)
     salida = pedidoDAO.registrarTracking(idPedido, evento)
